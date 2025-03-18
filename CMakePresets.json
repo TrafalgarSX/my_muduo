@@ -1,0 +1,44 @@
+{
+	"version": 3,
+	"configurePresets": [
+		{
+			"hidden": true,
+			"name": "Qt",
+			"cacheVariables": {
+				"CMAKE_PREFIX_PATH": "$env{QTDIR}"
+			}
+		},
+		{
+			"name": "gcc-64-presets",
+			"displayName": "GCC-x64",
+			"description": "Using compilers for GCC (x64 architecture)",
+			"generator": "Ninja Multi-Config",
+			"binaryDir": "${sourceDir}/${presetName}",
+			"cacheVariables": {
+				"CMAKE_TOOLCHAIN_FILE": "/home/data/vcpkg/scripts/buildsystems/vcpkg.cmake",
+				"CMAKE_INSTALL_PREFIX": "${sourceDir}/${presetName}",
+				"CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "YES"
+			},
+			"environment": {
+            "PATH": "$penv{PATH};/usr/lib/"
+			}		
+    },
+	],
+   "buildPresets": [
+        {
+            "name": "Release64-linux",
+            "description": "Release build using gcc-64-presets",
+            "displayName": "Release 64-bit Arch",
+            "configurePreset": "gcc-64-presets",
+            "configuration": "Release"
+        },
+        {
+            "name": "Debug64-linux",
+            "description": "Debug build using gcc-64-presets",
+            "displayName": "Debug 64-bit Arch",
+            "configurePreset": "gcc-64-presets",
+            "configuration": "Debug"
+        }    
+   ]
+}
