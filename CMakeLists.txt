@@ -6,7 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(fmt CONFIG REQUIRED)
-
+find_package(spdlog CONFIG REQUIRED)
+find_package(date CONFIG REQUIRED)
 list(APPEND INCLUDES
     ${PROJECT_SOURCE_DIR}/include
     ${VCPKG_INCLUDE_DIR}
@@ -22,6 +23,8 @@ list(APPEND SOURCES
 
 list(APPEND LIBS
     fmt::fmt
+    spdlog::spdlog
+    date::date date::date-tz
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})

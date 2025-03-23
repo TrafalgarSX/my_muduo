@@ -13,6 +13,7 @@ namespace CurrentThread
 {
 thread_local int t_cachedTid = 0;
 thread_local std::string t_tidString;
+thread_local std::string t_threadName = "unknown";
 static_assert(std::is_same<int, pid_t>::value, "pid_t should be int");
 
 pid_t gettid()

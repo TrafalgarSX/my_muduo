@@ -32,3 +32,6 @@
 *.app
 
 build/
+gcc-64-presets/
+.cache/
+compile_commands.json

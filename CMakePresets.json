@@ -15,7 +15,7 @@
 			"generator": "Ninja Multi-Config",
 			"binaryDir": "${sourceDir}/${presetName}",
 			"cacheVariables": {
-				"CMAKE_TOOLCHAIN_FILE": "/home/data/vcpkg/scripts/buildsystems/vcpkg.cmake",
+				"CMAKE_TOOLCHAIN_FILE": "/home/trafalgar/opensource/vcpkg/scripts/buildsystems/vcpkg.cmake",
 				"CMAKE_INSTALL_PREFIX": "${sourceDir}/${presetName}",
 				"CMAKE_CXX_COMPILER": "g++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "YES"

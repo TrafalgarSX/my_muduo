@@ -16,7 +16,7 @@ namespace CurrentThread
   // internal
   extern thread_local int t_cachedTid;
   extern thread_local std::string t_tidString;
-  const thread_local std::string t_threadName = "unknown";
+  extern thread_local std::string t_threadName;
 
   void cacheTid();
 
