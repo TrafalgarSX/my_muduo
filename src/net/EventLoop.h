@@ -1,6 +1,8 @@
 #include <base/noncopyable.h>
 #include <base/CurrentThread.h>
 
+#include <spdlog/spdlog.h>
+
 #include <functional>
 #include <cstdint>
 

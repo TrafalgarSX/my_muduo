@@ -27,7 +27,5 @@ list(APPEND LIBS
     date::date date::date-tz
 )
 
-add_executable(${PROJECT_NAME} ${SOURCES})
-target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDES})
-target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILE_OPTIONS})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
+add_subdirectory(src/base)
+add_subdirectory(src/net)

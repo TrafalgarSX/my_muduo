@@ -35,4 +35,4 @@ build/
 gcc-64-presets/
 .cache/
 compile_commands.json
-gcc-64-preset-arch/
+gcc-64-presets-arch/
