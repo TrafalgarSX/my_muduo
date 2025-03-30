@@ -1,16 +1,14 @@
-#include <base/noncopyable.h>
 #include <base/CurrentThread.h>
-
+#include <base/noncopyable.h>
 #include <spdlog/spdlog.h>
+#include <unistd.h>
 
 #include <functional>
-#include <cstdint>
 
-namespace muduo 
-{
+namespace muduo {
 class EventLoop : noncopyable
 {
-public:
+   public:
     typedef std::function<void> Functor;
 
     EventLoop();
@@ -22,27 +20,26 @@ public:
 
     void assertInLoopThread() const
     {
-        if(!isInLoopThread())
-        {
+        if (!isInLoopThread()) {
             abortNotInLoopThread();
         }
     }
 
-    bool isInLoopThread() const
-    {
-        return threadId_ == CurrentThread::tid();
-    }
+    bool isInLoopThread() const { return threadId_ == CurrentThread::tid(); }
 
+    static EventLoop* getEventLoopOfCurrentThread();
 
-private:
+   private:
     void abortNotInLoopThread() const
     {
         SPDLOG_ERROR("EventLoop::abortNotInLoopThread - EventLoop was created in threadId = {}, current thread id = {}",
                      threadId_, CurrentThread::tid());
         abort();
     }
+
+   private:
     bool looping_;
     const pid_t threadId_;
 };
 
-}
+}  // namespace muduo
