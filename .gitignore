@@ -31,8 +31,9 @@
 *.out
 *.app
 
+.cache/
+.vscode/
 build/
 gcc-64-presets/
-.cache/
 compile_commands.json
 gcc-64-presets-arch/
