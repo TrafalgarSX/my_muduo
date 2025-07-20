@@ -106,6 +106,7 @@ void TimerQueue::cancelInLoop(TimerId timerId)
     ActiveTimer timer(timerId.timer_, timerId.sequence_);
     ActiveTimerSet::iterator it = activeTimers_.find(timer);
     if (it != activeTimers_.end()) {
+        // TODO 
         size_t n = timers_.erase(Entry(it->first->expiration(), it->first));
         assert(n == 1);
         (void)n;
@@ -123,7 +124,7 @@ void TimerQueue::handleRead()
     Timestamp now(Timestamp::now());
     detail::readTimerfd(timerfd_, now);
 
-    std::vector<Entry> expired = getExpired(now);
+    std::vector<Entry> expired = std::move(getExpired(now));
 
     callingExpiredTimers_ = true;
     cancelingTimers_.clear();
@@ -139,12 +140,21 @@ void TimerQueue::handleRead()
 std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now)
 {
     assert(timers_.size() == activeTimers_.size());
-    std::vector<Entry> expired;
     Entry sentry(now, reinterpret_cast<Timer*>(UINTPTR_MAX));
     TimerSet::iterator end = timers_.lower_bound(sentry);
     assert(end == timers_.end() || now < end->first);
-    std::copy(timers_.begin(), end, back_inserter(expired));
-    timers_.erase(timers_.begin(), end);
+    
+    std::vector<Entry> expired;
+    // 预分配空间，提高性能
+    size_t count = std::distance(timers_.begin(), end);
+    expired.reserve(count);
+
+    // 使用 extract 从 set 中提取节点并移动到 vector
+    for (auto it = timers_.begin(); it != end; ) {
+        auto node = timers_.extract(it++);  // 提取节点，it 自动前进
+        expired.emplace_back(std::move(node.value()));  // 移动节点的值
+    }
+    
 
     for (const Entry& it : expired) {
         ActiveTimer timer(it.second.get(), it.second->sequence());
@@ -192,7 +202,7 @@ bool TimerQueue::insert(Timer* timer)
         earliestChanged = true;
     }
     {
-        std::pair<TimerSet::iterator, bool> result = timers_.insert(Entry(when, timer));
+        std::pair<TimerSet::iterator, bool> result = timers_.insert(Entry(when, std::unique_ptr<Timer>(timer)));
         assert(result.second);
         (void)result;
     }
