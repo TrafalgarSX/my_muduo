@@ -8,6 +8,7 @@ list(APPEND muduo_base_libs
     fmt::fmt
     spdlog::spdlog
     date::date date::date-tz
+    Boost::circular_buffer
 )
 
 list(APPEND muduo_base_src
@@ -21,6 +22,8 @@ list(APPEND muduo_base_src
 	noncopyable.h
 	Thread.cc
 	Thread.h
+    LogInit.cc
+    LogInit.h
 )
 
 add_library(muduo_base ${muduo_base_src})

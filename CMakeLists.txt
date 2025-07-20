@@ -8,6 +8,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(date CONFIG REQUIRED)
+find_package(Boost REQUIRED COMPONENTS circular_buffer)
+find_package(GTest CONFIG REQUIRED)
+
 list(APPEND INCLUDES
     ${PROJECT_SOURCE_DIR}/include
     ${VCPKG_INCLUDE_DIR}
@@ -29,3 +32,4 @@ list(APPEND LIBS
 
 add_subdirectory(src/base)
 add_subdirectory(src/net)
+add_subdirectory(test)

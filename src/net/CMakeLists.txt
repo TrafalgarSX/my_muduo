@@ -10,8 +10,15 @@ list(APPEND muduo_net_libs
 )
 
 list(APPEND muduo_net_src
+    poller/EPollPoller.cc
+    poller/PollPoller.cc
+
     EventLoop.cc
-    EventLoop.h
+    Channel.cc
+    Poller.cc 
+    SocketsOps.cc
+    Timer.cc
+    TimerQueue.cc
 )
 
 # 修改此处，使用 muduo_net_src 而非 muduo_base_src

@@ -2,6 +2,8 @@
   "dependencies": [
     "fmt",
     "spdlog",
-    "date"
+    "date",
+    "boost-circular-buffer",
+    "gtest"
   ]
 }
