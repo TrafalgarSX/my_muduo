@@ -17,7 +17,7 @@ PollPoller::PollPoller(EventLoop* loop) : Poller(loop)
 
 PollPoller::~PollPoller() { SPDLOG_DEBUG("PollPoller destroyed: {}", static_cast<void*>(this)); }
 
-Timestamp PollPoller::poll(int timeoutMs, ChannelList& activeChannels)
+Timestamp PollPoller::poll(int timeoutMs, ChannelArray& activeChannels)
 {
     int numEvents = ::poll(pollfds_.data(), static_cast<nfds_t>(pollfds_.size()), timeoutMs);
     int savedErrno = errno;
@@ -38,7 +38,12 @@ Timestamp PollPoller::poll(int timeoutMs, ChannelList& activeChannels)
     return now;
 }
 
-void PollPoller::fillActiveChannels(int numEvents, ChannelList& activeChannels) const
+/*
+   this will fill activeChannels with the channels that have events
+   it iterates through pollfds_ and checks revents for each fd
+   if revents is non-zero, it means the channel has events to handle
+*/
+void PollPoller::fillActiveChannels(int numEvents, ChannelArray& activeChannels) const
 {
     for (const auto& pfd : pollfds_) {
         if (numEvents <= 0) {
@@ -74,6 +79,7 @@ void PollPoller::updateChannel(Channel* channel)
         pollfds_.push_back(pfd);
         int idx = static_cast<int>(pollfds_.size()) - 1;
         channel->set_index(idx);
+        // Add the channel in the map
         channels_[channel->fd()] = channel;
     } else {
         /*
@@ -86,7 +92,6 @@ void PollPoller::updateChannel(Channel* channel)
         pfd.fd = channel->fd();
         pfd.events = static_cast<short>(channel->events());
         pfd.revents = 0;  // Reset revents to 0
-        // TODO Why? I can't understand this logic
         if (channel->isNoneEvent()) {
             // ignore this pollfd
             pfd.fd = -channel->fd() - 1;
@@ -94,6 +99,37 @@ void PollPoller::updateChannel(Channel* channel)
     }
 }
 
-void PollPoller::removeChannel(Channel* channel) {}
+void PollPoller::removeChannel(Channel* channel)
+{
+    assertInLoopThread();
+    assert(channel->isNoneEvent());
+    int idx = channel->index();
+    assert(0 <= idx && idx < static_cast<int>(pollfds_.size()));
+    struct pollfd& pfd = pollfds_[idx];
+    (void)pfd;
+    // before call removeChannel(), channel->disableAll() must be called(will call Poller::updateChannel())
+    assert(pfd.fd == -channel->fd() - 1 && pfd.events == channel->events());
+    size_t n = channels_.erase(channel->fd());
+
+    assert(n == 1);
+    (void)n;
+    if (static_cast<size_t>(idx) == pollfds_.size() - 1) {
+        pollfds_.pop_back();
+    } else {
+        /*
+           pollfds_ is a vector, so we need to swap the last element with the one we are removing
+           and then pop the last element.
+           This ensures that we don't need to shift all elements after the removed one.
+        */
+        int endChannelfd = pollfds_.back().fd;
+        std::swap(pollfds_[idx], pollfds_.back());
+        pollfds_.pop_back();
+        if (endChannelfd < 0) {
+            endChannelfd = -endChannelfd - 1;  // 还原 fd
+        }
+        // update the index of the channel that was swapped from the back
+        channels_[endChannelfd]->set_index(idx);
+    }
+}
 
 }  // namespace muduo

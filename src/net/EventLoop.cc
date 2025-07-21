@@ -77,6 +77,7 @@ void EventLoop::loop()
         }
         currentActiveChannel_ = nullptr;
         eventHandling_ = false;
+        doPendingFunctors();
     }
     SPDLOG_DEBUG("EventLoop {} quit", static_cast<void*>(this));
     looping_ = false;
@@ -192,6 +193,10 @@ void EventLoop::queueInLoop(Functor cb)
         pendingFunctors_.push_back(std::move(cb));
     }
 
+    /*
+    由于doPendingFunctors()调用的Functor可能再调用queueInLoop(cb)，这时queueInLoop()就必须wakeup()，
+    否则这些新加的cb就不能被及时调用了
+    */
     if (!isInLoopThread() || callingPendingFunctors_) {
         wakeup();
     }
@@ -218,6 +223,11 @@ void EventLoop::doPendingFunctors()
     callingPendingFunctors_ = true;
 
     {
+        /*
+        把回调列表swap()到局部变量functors中，
+        这样一方面减小了临界区的长度（意味着不会阻塞其他线程调用queueInLoop()），
+        另一方面也避免了死锁（因为Functor可能再调用queueInLoop()）。
+        */
         std::lock_guard<std::mutex> lock(mutex_);
         functors.swap(pendingFunctors_);
     }

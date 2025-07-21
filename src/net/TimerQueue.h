@@ -16,6 +16,7 @@
 
 #include <set>
 #include <vector>
+#include <memory>
 
 #include "Callbacks.h"
 #include "Channel.h"
@@ -64,7 +65,7 @@ class TimerQueue : noncopyable
     std::vector<Entry> getExpired(Timestamp now);
     void reset(std::vector<Entry>& expired, Timestamp now);
 
-    bool insert(Timer* timer);
+    bool insert(std::unique_ptr<Timer> timerPtr);
 
     EventLoop* loop_;
     const int timerfd_;

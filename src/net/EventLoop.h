@@ -102,8 +102,8 @@ class EventLoop : noncopyable
 
     const pid_t threadId_;
     Timestamp pollReturnTime_;
-    std::unique_ptr<Poller> poller_;
-    std::unique_ptr<TimerQueue> timerQueue_;
+    std::unique_ptr<Poller> poller_; // Poller is used to poll the I/O events, eventloop owns it
+    std::unique_ptr<TimerQueue> timerQueue_; // eventloop owns it, used for scheduling timers
 
     // for other threads to wake up the loop
     int wakeupFd_;
@@ -115,7 +115,7 @@ class EventLoop : noncopyable
     std::vector<Functor> pendingFunctors_;
 
     // for poller
-    ChannelList activeChannels_;
+    ChannelList activeChannels_;  // the list of active channels in the last poll(); does not own the channels
     Channel* currentActiveChannel_{nullptr};
 };
 

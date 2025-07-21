@@ -13,7 +13,7 @@ class EventLoop;
 class Channel;
 
 /*
-    Poller是EventLoop的间接成员，只供其owner EventLoop在IO线程调用，因此无须加锁。其生命期与EventLoop相等。
+    Poller是EventLoop的间接成员(std::unque_PTR)，只供其owner EventLoop在IO线程调用，因此无须加锁。其生命期与EventLoop相等。
     Poller并不拥有Channel，Channel在析构之前必须自己unregister（EventLoop::removeChannel()），避免空悬指针。
 
     This class doesn't own the Channel objects.
@@ -22,14 +22,14 @@ class Channel;
 class Poller : public noncopyable
 {
    public:
-    using ChannelList = std::vector<Channel*>;
+    using ChannelArray = std::vector<Channel*>;
 
     Poller(EventLoop* loop);
     virtual ~Poller();
 
     // poll the I/O events
     // Must be called in the loop thread.
-    virtual Timestamp poll(int timeoutMs, ChannelList& activeChannels) = 0;
+    virtual Timestamp poll(int timeoutMs, ChannelArray& activeChannels) = 0;
 
     // Changes the interested I/O events.
     // Must be called in the loop thread.
@@ -45,10 +45,10 @@ class Poller : public noncopyable
 
    protected:
     using ChannelMap = std::unordered_map<int, Channel*>;
-    ChannelMap channels_;  // fd -> Channel mapping
+    ChannelMap channels_;  // fd -> Channel mapping, does not own the channels
 
    private:
-    EventLoop* ownerLoop_;
+    EventLoop* ownerLoop_; // IO thread that owns this Poller， Poller not owns the EventLoop
 };
 
 }  // namespace muduo

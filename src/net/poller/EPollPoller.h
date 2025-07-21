@@ -18,14 +18,14 @@ class EPollPoller : public Poller
     EPollPoller(EventLoop* loop);
     ~EPollPoller() override;
 
-    Timestamp poll(int timeoutMs, ChannelList& activeChannels) override;
+    Timestamp poll(int timeoutMs, ChannelArray& activeChannels) override;
     void updateChannel(Channel* channel) override;
     void removeChannel(Channel* channel) override;
 
    private:
     static const int kInitEventListSize = 16;
     static const char* operationToString(int op);
-    void fillActiveChannels(int numEvents, ChannelList* activeChannels) const;
+    void fillActiveChannels(int numEvents, ChannelArray* activeChannels) const;
     void update(int operation, Channel* channel);
 
     using EventArray = std::vector<struct epoll_event>;
