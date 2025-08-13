@@ -1,10 +1,10 @@
 #ifndef MUDUO_NET_CHANNEL_H
 #define MUDUO_NET_CHANNEL_H
 
-#include <base/noncopyable.h>
 #include <base/Timestamp.h>
-
+#include <base/noncopyable.h>
 #include <date/date.h>
+
 #include <functional>
 
 namespace muduo {
@@ -19,7 +19,7 @@ class EventLoop;
     muduo用户一般不直接使用Channel，而会使用更上层的封装，如TcpConnection。
     Channel的生命期由其owner class负责管理，它一般是其他class的直接或间接成员。
     Channel的成员函数都只能在IO线程调用，因此更新数据成员都不必加锁。
-    
+
     This class doesn't own the file descriptor.
     The file descriptor could be a socket, an eventfd, a timerfd, or a signalfd
 */
@@ -38,10 +38,13 @@ class Channel : public noncopyable
     void setCloseCallback(EventCallback cb) { closeCallback_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { errorCallback_ = std::move(cb); }
 
-    void setRevents(int revt) { revents_ = revt; }
-    
+    /// Tie this channel to the owner object managed by shared_ptr,
+    /// prevent the owner object being destroyed in handleEvent.
+    void tie(const std::shared_ptr<void>&);
+
     int fd() const { return fd_; }
     int events() const { return events_; }
+    void setRevents(int revt) { revents_ = revt; }
     bool isNoneEvent() const { return events_ == kNoneEvent; }
 
     void enableReading()
@@ -64,22 +67,31 @@ class Channel : public noncopyable
         events_ &= ~kWriteEvent;
         update();
     }
-    
+
     void disableAll()
     {
         events_ = kNoneEvent;
         update();
     }
-    void remove();
+    bool isWriting() const { return events_ & kWriteEvent; }
+    bool isReading() const { return events_ & kReadEvent; }
 
     // for Poller
     int index() { return index_; }
     void set_index(int idx) { index_ = idx; }
 
+    // for debug
+    std::string reventsToString() const;
+    std::string eventsToString() const;
+    void doNotLogHup() { logHup_ = false; }
+
     EventLoop* ownerLoop() { return loop_; }
+    void remove();
 
    private:
+    static std::string eventsToString(int fd, int ev);
     void update();
+    void handleEventWithGuard(Timestamp receiveTime);
 
     static const int kNoneEvent;
     static const int kReadEvent;
@@ -88,11 +100,15 @@ class Channel : public noncopyable
    private:
     EventLoop* loop_;
     const int fd_;
-    int events_; // events to be monitored
-    int revents_; // events that are triggered, set by Poller
-    int index_; // used by Poller
-    bool logHup_ = true;
-    bool addedToLoop_ = false;
+    int events_;   // events to be monitored
+    int revents_;  // events that are triggered, set by Poller
+    int index_;    // used by Poller
+    bool logHup_{true};
+
+    std::weak_ptr<void> tie_;
+    bool tied_;
+    bool eventHandling_;
+    bool addedToLoop_{false};
 
     ReadEventCallback readCallback_;
     EventCallback writeCallback_;
@@ -102,4 +118,4 @@ class Channel : public noncopyable
 
 }  // namespace muduo
 
-#endif // MUDUO_NET_CHANNEL_H
+#endif  // MUDUO_NET_CHANNEL_H

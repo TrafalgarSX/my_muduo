@@ -7,6 +7,8 @@
 
 #include "../Poller.h"
 
+struct epoll_event;
+
 namespace muduo {
 
 class EventLoop;
@@ -25,7 +27,7 @@ class EPollPoller : public Poller
    private:
     static const int kInitEventListSize = 16;
     static const char* operationToString(int op);
-    void fillActiveChannels(int numEvents, ChannelArray* activeChannels) const;
+    void fillActiveChannels(int numEvents, ChannelArray& activeChannels) const;
     void update(int operation, Channel* channel);
 
     using EventArray = std::vector<struct epoll_event>;

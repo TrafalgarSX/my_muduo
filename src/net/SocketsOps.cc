@@ -10,6 +10,7 @@
 #include "Endian.h"
 
 #include <spdlog/spdlog.h>
+#include <base/LogInit.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -78,15 +79,14 @@ int sockets::createNonblockingOrDie(sa_family_t family)
   int sockfd = ::socket(family, SOCK_STREAM, IPPROTO_TCP);
   if (sockfd < 0)
   {
-    LOG_SYSFATAL << "sockets::createNonblockingOrDie";
+    SPDLOG_FATAL( "sockets::createNonblockingOrDie")
   }
-
   setNonBlockAndCloseOnExec(sockfd);
 #else
   int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
   if (sockfd < 0)
   {
-      SPDLOG_ERROR("socket creation failed: {}", strerror(errno));
+      SPDLOG_FATAL("socket creation failed: {}", strerror(errno));
   }
 #endif
   return sockfd;
@@ -97,7 +97,7 @@ void sockets::bindOrDie(int sockfd, const struct sockaddr* addr)
   int ret = ::bind(sockfd, addr, static_cast<socklen_t>(sizeof(struct sockaddr_in6)));
   if (ret < 0)
   {
-      SPDLOG_ERROR("bind failed: {}", strerror(errno));
+      SPDLOG_FATAL("bind failed: {}", strerror(errno));
   }
 }
 
@@ -106,7 +106,7 @@ void sockets::listenOrDie(int sockfd)
   int ret = ::listen(sockfd, SOMAXCONN);
   if (ret < 0)
   {
-      SPDLOG_ERROR( "sockets::listenOrDie");
+      SPDLOG_FATAL( "sockets::listenOrDie");
   }
 }
 

@@ -15,7 +15,33 @@ Channel::Channel(EventLoop* loop, int fd) : loop_(loop), fd_(fd), events_(kNoneE
 {
 }
 
-Channel::~Channel() {}
+Channel::~Channel()
+{
+    assert(!eventHandling_);
+    assert(!addedToLoop_);
+    if (loop_->isInLoopThread()) {
+        assert(!loop_->hasChannel(this));
+    }
+}
+
+void Channel::tie(const std::shared_ptr<void>& obj)
+{
+    tie_ = obj;
+    tied_ = true;
+}
+
+void Channel::handleEvent(Timestamp receiveTime)
+{
+    std::shared_ptr<void> guard;
+    if (tied_) {
+        guard = tie_.lock();
+        if (guard) {
+            handleEventWithGuard(receiveTime);
+        }
+    } else {
+        handleEventWithGuard(receiveTime);
+    }
+}
 
 /*
     POLLNVAL: 无效的请求，表示fd无效
@@ -25,8 +51,9 @@ Channel::~Channel() {}
     POLLPRI: 优先级数据可读事件，表示有紧急数据可读
     POLLOUT: 可写事件，表示可以写数据
 */
-void Channel::handleEvent(Timestamp receiveTime)
+void Channel::handleEventWithGuard(Timestamp receiveTime)
 {
+    eventHandling_ = true;
     if ((revents_ & POLLHUP) && !(revents_ & POLLIN)) {
         if (logHup_) {
             SPDLOG_WARN("Channel::handle_event - fd = {}, POLLHUP", fd_);
@@ -51,6 +78,7 @@ void Channel::handleEvent(Timestamp receiveTime)
             writeCallback_();
         }
     }
+    eventHandling_ = false;
 }
 
 void Channel::update()
@@ -63,6 +91,25 @@ void Channel::remove()
 {
     addedToLoop_ = false;
     loop_->removeChannel(this);
+}
+
+std::string Channel::reventsToString() const { return eventsToString(fd_, revents_); }
+
+std::string Channel::eventsToString() const { return eventsToString(fd_, events_); }
+
+std::string Channel::eventsToString(int fd, int ev)
+{
+    std::ostringstream oss;
+    oss << fd << ": ";
+    if (ev & POLLIN) oss << "IN ";
+    if (ev & POLLPRI) oss << "PRI ";
+    if (ev & POLLOUT) oss << "OUT ";
+    if (ev & POLLHUP) oss << "HUP ";
+    if (ev & POLLRDHUP) oss << "RDHUP ";
+    if (ev & POLLERR) oss << "ERR ";
+    if (ev & POLLNVAL) oss << "NVAL ";
+
+    return oss.str();
 }
 
 }  // namespace muduo

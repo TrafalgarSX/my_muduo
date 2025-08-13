@@ -13,10 +13,18 @@ list(APPEND muduo_net_src
     poller/EPollPoller.cc
     poller/PollPoller.cc
 
-    EventLoop.cc
+    Buffer.cc
     Channel.cc
+    Connector.cc 
+    EventLoop.cc
+    EventLoopThread.cc 
+    EventLoopThreadPool.cc 
+    InetAddress.cc 
     Poller.cc 
+    Socket.cc 
     SocketsOps.cc
+    TcpConnection.cc 
+    TcpServer.cc
     Timer.cc
     TimerQueue.cc
 )

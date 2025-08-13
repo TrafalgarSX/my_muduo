@@ -1,5 +1,6 @@
 #include "TimerQueue.h"
 
+#include <base/LogInit.h>
 #include <spdlog/spdlog.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
@@ -16,7 +17,7 @@ int createTimerfd()
     // 此时 timerfd 不会触发任何事件
     int timerfd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
     if (timerfd < 0) {
-        SPDLOG_ERROR("Failed to create timerfd: {}", strerror(errno));
+        SPDLOG_FATAL("Failed to create timerfd: {}", strerror(errno));
     }
     return timerfd;
 }
@@ -170,7 +171,7 @@ void TimerQueue::handleRead()
     cancelingTimers_.clear();
     // safe to callback outside critical section
     for (const Entry& it : expired) {
-        it.second->run(); // could be call cancel() inside
+        it.second->run();  // could be call cancel() inside
     }
     callingExpiredTimers_ = false;
 
@@ -219,7 +220,8 @@ void TimerQueue::reset(std::vector<Entry>& expired, Timestamp now)
             it.second->restart(now);
             insert(std::move(it.second));
         }
-        // 被取消了，或者不是重复定时器，销毁它, 这里不需要主动调用， expired 中的 it.second 已经是 std::unique_ptr<Timer>，会自动调用析构函数释放资源
+        // 被取消了，或者不是重复定时器，销毁它, 这里不需要主动调用， expired 中的 it.second 已经是
+        // std::unique_ptr<Timer>，会自动调用析构函数释放资源
     }
 
     if (!timers_.empty()) {
